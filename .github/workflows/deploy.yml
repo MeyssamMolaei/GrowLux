@@ -1,30 +1,73 @@
-name: Deploy GrowLux
+name: 🚀 Deploy GrowLux to Production
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:   # Allow manual deploys from GitHub UI
 
 jobs:
   deploy:
+    name: Deploy to Server
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Deploy to server
-      uses: appleboy/ssh-action@v0.1.7
-      with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SSH_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /var/www/vhosts/meyssam.ir/httpdocs/GrowLux || exit 1
-          if [ -d ".git" ]; then
-            git pull origin main
-          else
-            rm -rf * .[^.]* 2>/dev/null
-            git clone https://github.com/MeyssamMolaei/GrowLux .
-          fi
-          chmod -R 755 .
+      # Checkout repo
+      - name: 🧾 Checkout code
+        uses: actions/checkout@v4
+
+      # Verify SSH connectivity and setup
+      - name: 🔐 Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          echo "✅ SSH key added and host verified."
+
+      # Optional build step (for React/Vite/static apps)
+      # Uncomment if your project needs build artifacts before deployment
+      # - name: 🏗️ Build project
+      #   run: |
+      #     npm ci
+      #     npm run build
+
+      - name: 🚀 Deploy using SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          timeout: 120s
+          script: |
+            set -e
+            echo "🌍 Starting deployment on $(hostname)..."
+
+            TARGET_DIR="/var/www/vhosts/meyssam.ir/httpdocs/GrowLux"
+            REPO_URL="https://github.com/MeyssamMolaei/GrowLux.git"
+
+            if [ -d "$TARGET_DIR/.git" ]; then
+              echo "📦 Pulling latest changes..."
+              cd "$TARGET_DIR"
+              git fetch origin main
+              git reset --hard origin/main
+            else
+              echo "🆕 Cloning repository..."
+              rm -rf "$TARGET_DIR"
+              mkdir -p "$TARGET_DIR"
+              git clone "$REPO_URL" "$TARGET_DIR"
+            fi
+
+            cd "$TARGET_DIR"
+
+            echo "🧹 Cleaning old temp files..."
+            find . -type f -name "*.tmp" -delete || true
+
+            echo "🔧 Setting permissions..."
+            chown -R growlux:www-data "$TARGET_DIR"
+            chmod -R 755 "$TARGET_DIR"
+
+            echo "✅ Deployment completed successfully at $(date)."
+
+      - name: ✅ Post-deploy confirmation
+        run: echo "GrowLux has been successfully deployed!"
