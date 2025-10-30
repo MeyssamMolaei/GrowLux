@@ -20,6 +20,11 @@ jobs:
         username: ${{ secrets.SSH_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          cd /var/www/vhosts/meyssam.ir/httpdocs/GrowLux
-          git pull origin main || git clone https://github.com/${{ github.repository }} .
+          cd /var/www/vhosts/meyssam.ir/httpdocs/GrowLux || exit 1
+          if [ -d ".git" ]; then
+            git pull origin main
+          else
+            rm -rf * .[^.]* 2>/dev/null
+            git clone https://github.com/MeyssamMolaei/GrowLux .
+          fi
           chmod -R 755 .
