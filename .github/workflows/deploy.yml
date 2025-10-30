@@ -63,9 +63,8 @@ jobs:
             echo "🧹 Cleaning old temp files..."
             find . -type f -name "*.tmp" -delete || true
 
-            echo "🔧 Setting permissions..."
-            chown -R growlux:www-data "$TARGET_DIR"
-            chmod -R 755 "$TARGET_DIR"
+            echo "🔧 Adjusting permissions..."
+            chmod -R 755 "$TARGET_DIR" || true
 
             echo "✅ Deployment completed successfully at $(date)."
 
