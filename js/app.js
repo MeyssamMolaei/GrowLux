@@ -180,7 +180,7 @@ class GrowLux {
   getColorSummary(avgColor) {
     const { r, g, b } = avgColor;
     const spectrum = this.getDominantColor(avgColor);
-    return `Dominant tone:</br> ${spectrum} (R:${r} G:${g} B:${b})`;
+    return `Dominant tone:\n ${spectrum} (R:${r} G:${g} B:${b})`;
   }
 
   getDominantColor({ r, g, b }) {
