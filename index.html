@@ -21,6 +21,7 @@
         <div class="controls">
             <button id="startBtn" class="btn">Start Measurement</button>
             <button id="stopBtn" class="btn hidden">Stop Measurement</button>
+            <button id="switchBtn" class="btn hidden">📷 Switch Camera</button>
         </div>
 
         <div class="mode-toggle">
@@ -43,116 +44,6 @@
         </div>
     </div>
 
-    <script src="js/app.js"></script>tx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
-                
-                // Get image data and calculate brightness
-                const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-                const brightness = this.calculateBrightness(imageData.data);
-                
-                // Update display
-                this.updateDisplay(brightness);
-                
-                // Continue measurement loop
-                this.animationId = requestAnimationFrame(() => this.measureLight());
-            }
-
-            calculateBrightness(pixelData) {
-                let totalBrightness = 0;
-                const pixelCount = pixelData.length / 4; // RGBA format
-                
-                // Calculate average brightness using luminance formula
-                // Y = 0.299*R + 0.587*G + 0.114*B (standard luminance weights)
-                for (let i = 0; i < pixelData.length; i += 4) {
-                    const r = pixelData[i];
-                    const g = pixelData[i + 1];
-                    const b = pixelData[i + 2];
-                    
-                    // Calculate luminance (perceived brightness)
-                    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-                    totalBrightness += luminance;
-                }
-                
-                // Return average brightness (0-255 scale)
-                return totalBrightness / pixelCount;
-            }
-
-            updateDisplay(brightness) {
-                // Convert brightness to percentage (0-100)
-                const percentage = Math.round((brightness / 255) * 100);
-                
-                // Estimate lux value (rough approximation)
-                // This is a simplified conversion - real lux meters use calibrated sensors
-                const estimatedLux = Math.round(brightness * 4); // Rough scaling factor
-                
-                if (this.isPlantMode) {
-                    this.updatePlantMode(percentage);
-                } else {
-                    this.updateRawMode(estimatedLux, percentage);
-                }
-                
-                // Update progress bar
-                this.lightFill.style.width = `${percentage}%`;
-                this.lightFill.style.background = this.getColorForBrightness(percentage);
-            }
-
-            updatePlantMode(percentage) {
-                let status, color;
-                
-                if (percentage < 20) {
-                    status = 'Low Light';
-                    color = '#e74c3c';
-                } else if (percentage < 60) {
-                    status = 'Moderate Light';
-                    color = '#f39c12';
-                } else {
-                    status = 'Good Light';
-                    color = '#27ae60';
-                }
-                
-                this.luxValue.textContent = status;
-                this.luxValue.style.color = color;
-                this.percentage.textContent = `${percentage}%`;
-                this.status.textContent = this.getLightAdvice(percentage);
-            }
-
-            updateRawMode(lux, percentage) {
-                this.luxValue.textContent = `${lux} lux`;
-                this.luxValue.style.color = '#2d5a2d';
-                this.percentage.textContent = `${percentage}%`;
-                this.status.textContent = 'Raw Light Measurement';
-            }
-
-            getLightAdvice(percentage) {
-                if (percentage < 20) return 'Move to brighter location';
-                if (percentage < 40) return 'Good for low-light plants';
-                if (percentage < 70) return 'Perfect for most plants';
-                return 'Great for sun-loving plants';
-            }
-
-            getColorForBrightness(percentage) {
-                if (percentage < 20) return '#e74c3c';
-                if (percentage < 40) return '#f39c12';
-                if (percentage < 70) return '#f1c40f';
-                return '#27ae60';
-            }
-
-            setMode(isPlantMode) {
-                this.isPlantMode = isPlantMode;
-                
-                if (isPlantMode) {
-                    this.plantModeBtn.classList.add('active');
-                    this.rawModeBtn.classList.remove('active');
-                } else {
-                    this.plantModeBtn.classList.remove('active');
-                    this.rawModeBtn.classList.add('active');
-                }
-            }
-        }
-
-        // Initialize app when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            new GrowLux();
-        });
-    </script>
+    <script src="js/app.js"></script>
 </body>
 </html>

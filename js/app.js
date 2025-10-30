@@ -6,6 +6,7 @@ class GrowLux {
         this.isRunning = false;
         this.isPlantMode = true;
         this.animationId = null;
+        this.currentCamera = 'environment';
         
         this.initializeElements();
         this.bindEvents();
@@ -14,6 +15,7 @@ class GrowLux {
     initializeElements() {
         this.startBtn = document.getElementById('startBtn');
         this.stopBtn = document.getElementById('stopBtn');
+        this.switchBtn = document.getElementById('switchBtn');
         this.plantModeBtn = document.getElementById('plantMode');
         this.rawModeBtn = document.getElementById('rawMode');
         this.measurementDisplay = document.getElementById('measurementDisplay');
@@ -26,15 +28,15 @@ class GrowLux {
     bindEvents() {
         this.startBtn.addEventListener('click', () => this.startMeasurement());
         this.stopBtn.addEventListener('click', () => this.stopMeasurement());
+        this.switchBtn.addEventListener('click', () => this.switchCamera());
         this.plantModeBtn.addEventListener('click', () => this.setMode(true));
         this.rawModeBtn.addEventListener('click', () => this.setMode(false));
     }
 
     async startMeasurement() {
         try {
-            // Request camera access
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' } // Prefer back camera
+                video: { facingMode: this.currentCamera }
             });
             
             this.video.srcObject = stream;
@@ -43,6 +45,7 @@ class GrowLux {
             // Update UI
             this.startBtn.classList.add('hidden');
             this.stopBtn.classList.remove('hidden');
+            this.switchBtn.classList.remove('hidden');
             this.measurementDisplay.classList.remove('hidden');
             
             // Start measurement loop
@@ -70,6 +73,7 @@ class GrowLux {
         // Update UI
         this.startBtn.classList.remove('hidden');
         this.stopBtn.classList.add('hidden');
+        this.switchBtn.classList.add('hidden');
         this.measurementDisplay.classList.add('hidden');
     }
 
@@ -172,6 +176,30 @@ class GrowLux {
         if (percentage < 40) return '#f39c12';
         if (percentage < 70) return '#f1c40f';
         return '#27ae60';
+    }
+
+    async switchCamera() {
+        if (!this.isRunning) return;
+        
+        // Switch camera mode
+        this.currentCamera = this.currentCamera === 'environment' ? 'user' : 'environment';
+        
+        // Stop current stream
+        if (this.video.srcObject) {
+            this.video.srcObject.getTracks().forEach(track => track.stop());
+        }
+        
+        // Start new stream with switched camera
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: this.currentCamera }
+            });
+            this.video.srcObject = stream;
+        } catch (error) {
+            console.error('Camera switch error:', error);
+            // Fallback to original camera
+            this.currentCamera = this.currentCamera === 'environment' ? 'user' : 'environment';
+        }
     }
 
     setMode(isPlantMode) {
